@@ -152,15 +152,17 @@ a{color:var(--brand);text-decoration:none}
 <div class="demo-banner">Interactive product demo — <b>sample data only</b>. No real customers, sites or messages.</div>
 <div class="shell" id="app"></div>
 <div id="overlay-root"></div>
+<script src="assets1.js"></script>
+<script src="assets2.js"></script>
+<script src="assets3.js"></script>
+<script src="assets4.js"></script>
 <script>
 /* ============ Nirmaan demo — state + seed ============ */
 const LS_KEY='nirmaan.demo.v1';
-const IMG={
-  foundation:'img-villa-foundation.jpg', slab:'img-villa-slab.jpg',
-  brick:'img-villa-brickwork.jpg', apt:'img-apartment-structure.jpg',
-  steel:'img-materials-steel.jpg', counter:'img-countertop-samples.jpg',
-  tiles:'img-tiles-flooring.jpg', villa:'img-villa-cover.jpg'
-};
+const IMG={foundation:IMGS.foundation, slab:IMGS.slab,
+  brick:IMGS.brick, apt:IMGS.apt,
+  steel:IMGS.steel, counter:IMGS.counter,
+  tiles:IMGS.tiles, villa:IMGS.villa};
 const GALLERY=Object.values(IMG);
 const DAY=864e5, HOUR=36e5, MIN=6e4;
 function ago(n,unit){return Date.now()-n*unit}
