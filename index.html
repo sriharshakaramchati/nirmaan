@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Nirmaan — Site updates, approved on WhatsApp (Demo)</title>
+<title>Bala — Site updates, approved on WhatsApp (Demo)</title>
 <meta name="description" content="Interactive product demo: construction site updates, approvals on WhatsApp, and a complete activity log. Sample data only.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -157,7 +157,7 @@ a{color:var(--brand);text-decoration:none}
 <script src="assets3.js"></script>
 <script src="assets4.js"></script>
 <script>
-/* ============ Nirmaan demo — state + seed ============ */
+/* ============ Bala demo — state + seed ============ */
 const LS_KEY='nirmaan.demo.v1';
 const IMG={foundation:IMGS.foundation, slab:IMGS.slab,
   brick:IMGS.brick, apt:IMGS.apt,
@@ -222,7 +222,7 @@ function logIt(actor,projectId,action,detail){DB.log.push({ts:Date.now(),actor,p
 /* ============ rendering ============ */
 const app=document.getElementById('app'), overlayRoot=document.getElementById('overlay-root');
 function topbar(crumb,showSwitch=true){
-  return `<div class="topbar"><div class="wordmark">Nir<span>maan</span></div>
+  return `<div class="topbar"><div class="wordmark">Bala</div>
   ${showSwitch?`<button class="role-switch" onclick="go('#/')">Switch role</button>`:''}
   ${crumb?`<div class="crumb">${crumb}</div>`:''}</div>`;
 }
@@ -281,7 +281,7 @@ function viewHome(){
     <button class="card role-card" onclick="go('#/admin')"><div class="role-ic" style="background:var(--brand-soft)">📋</div>
       <h3>Admin</h3><p>Monitor every project, pending approvals and the complete activity log — who did what, and when.</p><div class="go">Open admin view →</div></button>
   </div>
-  <div class="footer-note">Nirmaan · product concept demo<br>All names, projects and photos are sample data generated for this demo.<br><a href="javascript:resetDemo()">Reset demo data</a></div>`;
+  <div class="footer-note">Bala · product concept demo<br>All names, projects and photos are sample data generated for this demo.<br><a href="javascript:resetDemo()">Reset demo data</a></div>`;
 }
 /* ---- PM ---- */
 function viewPM(){
@@ -475,9 +475,9 @@ function showWhatsApp(a){
   overlayRoot.innerHTML=`<div class="wa-overlay" onclick="if(event.target===this)closeOverlay()">
   <button class="wa-close" onclick="closeOverlay()">Close</button>
   <div class="phone"><div class="scr">
-    <div class="wa-head"><div class="wa-av">N</div><div><div class="nm">Nirmaan Updates</div><div class="st">Business account · online</div></div></div>
+    <div class="wa-head"><div class="wa-av">B</div><div><div class="nm">Bala Updates</div><div class="st">Business account · online</div></div></div>
     <div class="wa-chat">
-      <div class="wa-msg"><div class="biz">~ Nirmaan Updates</div>
+      <div class="wa-msg"><div class="biz">~ Bala Updates</div>
         <p>🏗️ <b>Approval needed</b> — ${esc(p.name)}, ${esc(p.loc)}\n\n${esc(p.pm)} (Project Manager) has requested your decision:\n<b>${esc(a.title)}</b>\n\nNo app, no login — tap below to review photos and respond:</p>
         <a class="walink" href="#/approve/${a.id}" onclick="closeOverlay()">Review &amp; respond →</a>
         <div class="meta">${t} <b>✓✓</b></div>
