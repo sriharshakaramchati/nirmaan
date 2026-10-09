@@ -400,7 +400,7 @@ function viewApprove(aid){
     app.innerHTML=`${topbar('Opened via WhatsApp link · no sign-in needed',false)}
     <div class="card" style="padding:26px 20px;margin-top:14px" ><div class="center">
     <div class="success-ic">${a.status==='approved'?'✓':'✎'}</div>
-    <h1 style="font-size:20px;font-weight:800">Already ${a.status==='approved'?'approved':'responded to'}</h1>
+    <h1 style="font-size:20px;font-weight:800">${a.status==='approved'?'Approved':'Response recorded'}</h1>
     <p style="color:var(--muted);margin-top:6px">“${esc(a.title)}” — ${esc(p.name)}<br>${a.comment?`Your response: “${esc(a.comment)}”<br>`:''}${p.name?'':''}Recorded ${rel(a.decidedTs)}.</p>
     <div class="decision-bar"><button class="btn ghost block" onclick="go('#/project/${p.id}')">View project feed</button></div></div></div>`;
     return;
@@ -443,7 +443,7 @@ function viewAdmin(){
     const dc=l.action.startsWith('approved')?'var(--green)':(l.action.startsWith('asked')?'var(--red)':'var(--brand)');
     return `<div class="log-row"><div class="log-dot" style="background:${dc}"></div>
     <div style="flex:1"><div class="txt"><b>${esc(l.actor)}</b> ${esc(l.action)} — <b>${esc(projectName(l.projectId))}</b><br><span style="color:var(--muted)">${esc(l.detail)}</span></div>
-    <div class="time">${fullTime(l.ts)} · ${rel(l.ts)}</div></div></div>`;
+    <div class="time">${Date.now()-l.ts<7*DAY?fullTime(l.ts)+' · '+rel(l.ts):fullTime(l.ts)}</div></div></div>`;
   }).join('');
   app.innerHTML=`${topbar('Admin view')}
   <div class="hero" style="padding-top:10px"><h1>Builder admin</h1><p>Every project, pending decision and action across the company — one log.</p></div>
