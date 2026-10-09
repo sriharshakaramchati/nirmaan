@@ -146,6 +146,23 @@ a{color:var(--brand);text-decoration:none}
 @media(min-width:900px){.two-col{grid-template-columns:1.2fr .8fr;align-items:start}}
 .success-ic{width:64px;height:64px;border-radius:50%;background:var(--green-soft);color:var(--green);font-size:30px;display:flex;align-items:center;justify-content:center;margin:6px auto 14px}
 .center{text-align:center}
+
+.login-wrap{max-width:420px;margin:8vh auto 0}
+.login-wrap .wordmark{font-size:28px;margin-bottom:6px}
+.cred-hint{background:var(--brand-soft);border-radius:12px;padding:12px 14px;font-size:12.5px;color:var(--ink);margin-top:14px;line-height:1.6}
+.cred-hint b{font-weight:700}
+.field input[type=password],.field input[type=number],.field input[type=date],.field input[type=tel]{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff;font-size:14.5px}
+.field input[type=password]:focus,.field input[type=number]:focus,.field input[type=date]:focus,.field input[type=tel]:focus{outline:2px solid var(--brand-soft);border-color:var(--brand)}
+.err{color:var(--red);font-size:13px;font-weight:600;margin:-4px 0 10px}
+.user-pill{margin-left:auto;font-size:12.5px;color:var(--muted)}
+.user-pill b{color:var(--ink)}
+.bill-row{display:flex;gap:12px;align-items:center;padding:12px 16px;border-top:1px solid var(--line);font-size:13.5px}
+.bill-row:first-child{border-top:none}
+.bill-row .amt{margin-left:auto;font-weight:800;white-space:nowrap}
+.admin-only{display:inline-block;font-size:11px;font-weight:700;background:#1d1a15;color:#f4b26a;border-radius:999px;padding:2px 9px;vertical-align:middle}
+.btn.wa{background:#25d366;color:#07300f}
+.wa-steps{font-size:13.5px;line-height:1.7;padding-left:18px}
+.toggle-row{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:14px}
 </style>
 </head>
 <body>
@@ -166,6 +183,10 @@ const IMG={foundation:IMGS.foundation, slab:IMGS.slab,
 const GALLERY=Object.values(IMG);
 const DAY=864e5, HOUR=36e5, MIN=6e4;
 function ago(n,unit){return Date.now()-n*unit}
+function seedBills(){return [
+  {id:'b1',projectId:'p1',vendor:'Sri Lakshmi Cement Traders',no:'INV-2041',amount:148500,date:new Date(Date.now()-3*864e5).toISOString().slice(0,10),note:'300 bags OPC 53 grade',file:null,by:'Rajesh Verma',ts:Date.now()-3*864e5},
+  {id:'b2',projectId:'p2',vendor:'Deccan Tiles & Sanitary',no:'DT-7718',amount:86200,date:new Date(Date.now()-2*864e5).toISOString().slice(0,10),note:'Bathroom wall tiles, ivory gloss',file:null,by:'Rajesh Verma',ts:Date.now()-2*864e5},
+  {id:'b3',projectId:'p3',vendor:'Balaji Steel Suppliers',no:'BS-330',amount:212000,date:new Date(Date.now()-5*864e5).toISOString().slice(0,10),note:'TMT bars, 4 tonnes',file:null,by:'Sana Sheikh',ts:Date.now()-5*864e5}];}
 function seed(){
   const P={
     p1:{id:'p1',name:'Lakeview Villa',loc:'Kokapet, Hyderabad',type:'Independent villa · 3 BHK',customers:['Ananya Reddy','Vikram Reddy'],pm:'Rajesh Verma',cover:IMG.villa,progress:62},
@@ -198,11 +219,12 @@ function seed(){
     {ts:ago(4,DAY),actor:'Arjun Deshmukh',projectId:'p3',action:'rejected',detail:'Main door: "Too expensive…"'},
     {ts:ago(4,DAY),actor:'Sana Sheikh',projectId:'p3',action:'posted a progress update',detail:'External plaster complete (81%)'}
   ];
-  return {projects:P,updates:U,approvals:A,log:L};
+  return {projects:P,updates:U,approvals:A,log:L,bills:seedBills()};
 }
 let DB;
 try{DB=JSON.parse(localStorage.getItem(LS_KEY))}catch(e){}
 if(!DB||!DB.projects){DB=seed();save()}
+if(!DB.bills){DB.bills=seedBills();save()}
 function save(){localStorage.setItem(LS_KEY,JSON.stringify(DB))}
 function resetDemo(){localStorage.removeItem(LS_KEY);DB=seed();save();location.hash='#/';render();toast('Demo reset to sample data')}
 function uid(p){return p+Math.random().toString(36).slice(2,8)}
@@ -219,11 +241,53 @@ function fullTime(ts){return new Date(ts).toLocaleString('en-IN',{day:'numeric',
 function initials(n){return n.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase()}
 function projectName(id){const p=DB.projects[id];return p?p.name:'—'}
 function logIt(actor,projectId,action,detail){DB.log.push({ts:Date.now(),actor,projectId,action,detail})}
+
+/* ============ demo login (client-side only) ============ */
+const USERS={
+  admin:{pw:'Bala@Admin1',role:'admin',name:'Bala (Admin)',home:'#/admin'},
+  rajesh:{pw:'Bala@PM1',role:'pm',name:'Rajesh Verma',home:'#/pm'},
+  customer:{pw:'Bala@Cust1',role:'customer',name:'Customer',home:'#/customer'}
+};
+const AUTH_KEY='bala.session.v1';
+function session(){try{return JSON.parse(sessionStorage.getItem(AUTH_KEY))}catch(e){return null}}
+function doLogin(){
+  const id=(document.getElementById('lg-id').value||'').trim().toLowerCase();
+  const pw=document.getElementById('lg-pw').value||'';
+  const u=USERS[id];
+  if(!u||u.pw!==pw){document.getElementById('lg-err').textContent='Wrong ID or password. Try again.';return}
+  sessionStorage.setItem(AUTH_KEY,JSON.stringify({id,role:u.role,name:u.name}));
+  const next=sessionStorage.getItem('bala.next');sessionStorage.removeItem('bala.next');
+  location.hash=(next&&canView(u.role,next))?next:u.home;
+  render();
+}
+function logout(){sessionStorage.removeItem(AUTH_KEY);location.hash='#/login';render()}
+function canView(role,h){
+  if(h.startsWith('#/pm'))return role==='pm';
+  if(h.startsWith('#/admin'))return role==='admin';
+  if(h==='#/customer')return role==='customer'||role==='admin';
+  if(h.startsWith('#/approve/'))return role==='customer'||role==='admin';
+  if(h.startsWith('#/project/'))return true;
+  return true;
+}
+function viewLogin(){
+  app.innerHTML=`<div class="login-wrap"><div class="wordmark">Bala</div>
+  <div class="hero" style="padding:0 0 14px"><h1 style="font-size:24px">Sign in to continue</h1><p>Enter your ID and password to view projects.</p></div>
+  <div class="card" style="padding:18px"><form onsubmit="doLogin();return false">
+    <div class="field"><label>ID</label><input type="text" id="lg-id" autocomplete="username" autocapitalize="none" placeholder="Your ID"></div>
+    <div class="field"><label>Password</label><input type="password" id="lg-pw" autocomplete="current-password" placeholder="Password"></div>
+    <div class="err" id="lg-err"></div>
+    <button class="btn primary block" type="submit">Sign in</button></form></div>
+  <div class="cred-hint"><b>Demo logins</b><br>
+    Admin: <b>admin</b> / Bala@Admin1<br>
+    Project Manager: <b>rajesh</b> / Bala@PM1<br>
+    Customer: <b>customer</b> / Bala@Cust1<br>
+    <span style="color:var(--muted)">Demo only. A real build would use secure server-side accounts.</span></div></div>`;
+}
 /* ============ rendering ============ */
 const app=document.getElementById('app'), overlayRoot=document.getElementById('overlay-root');
 function topbar(crumb,showSwitch=true){
   return `<div class="topbar"><div class="wordmark">Bala</div>
-  ${showSwitch?`<button class="role-switch" onclick="go('#/')">Switch role</button>`:''}
+  ${session()?`<span class="user-pill">${esc(session().name)}</span><button class="role-switch" onclick="logout()">Log out</button>`:''}
   ${crumb?`<div class="crumb">${crumb}</div>`:''}</div>`;
 }
 function go(h){location.hash=h}
@@ -268,7 +332,7 @@ function approvalCard(a,customerView){
   </div></div>`;
 }
 /* ---- role select ---- */
-function viewHome(){
+function viewHomeOld(){
   app.innerHTML=`${topbar('',false)}
   <div class="hero"><h1>Site updates your customers actually see.</h1>
   <p>Daily photos and progress from the site, approval requests answered in one tap on WhatsApp, and a complete activity log for the builder. This demo walks through all three roles.</p></div>
@@ -283,6 +347,7 @@ function viewHome(){
   </div>
   <div class="footer-note">Bala · product concept demo<br>All names, projects and photos are sample data generated for this demo.<br><a href="javascript:resetDemo()">Reset demo data</a></div>`;
 }
+function viewHome(){const u=session();go(u?USERS[u.id].home:'#/login')}
 /* ---- PM ---- */
 function viewPM(){
   const cards=Object.values(DB.projects).map(p=>{
@@ -295,6 +360,9 @@ function viewPM(){
   }).join('');
   app.innerHTML=`${topbar('Project Manager view')}
   <div class="hero" style="padding-top:10px"><h1>Namaste, Rajesh 👋</h1><p>Your sites today. Post an update — customers see it instantly, and approval requests land on their WhatsApp.</p></div>
+  <div class="card" style="padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div style="flex:1;min-width:200px"><b>Bills &amp; invoices</b> <span class="admin-only">Admin only</span><div style="color:var(--muted);font-size:13px">Add vendor bills and invoices. Only the admin can see them. You have added ${DB.bills.filter(b=>b.by===session().name).length}.</div></div>
+    <button class="btn primary sm" onclick="go('#/pm/bill')">+ Add bill / invoice</button></div>
   <div class="section-label">Your projects</div><div class="grid proj-grid">${cards}</div>`;
 }
 let draft={type:'progress',photos:[],uploads:[]};
@@ -397,7 +465,7 @@ function viewApprove(aid){
   const a=DB.approvals.find(x=>x.id===aid); if(!a)return viewHome();
   const p=DB.projects[a.projectId];
   if(a.status!=='pending'){
-    app.innerHTML=`${topbar('Opened via WhatsApp link · no sign-in needed',false)}
+    app.innerHTML=`${topbar('Opened via WhatsApp link',false)}
     <div class="card" style="padding:26px 20px;margin-top:14px" ><div class="center">
     <div class="success-ic">${a.status==='approved'?'✓':'✎'}</div>
     <h1 style="font-size:20px;font-weight:800">${a.status==='approved'?'Approved':'Response recorded'}</h1>
@@ -416,7 +484,7 @@ function viewApprove(aid){
     <div class="field" style="margin-top:12px"><label>Comment (optional)</label><textarea id="inp-comment" style="min-height:64px" placeholder="Anything the site team should know?"></textarea></div>
     <div class="decision-bar"><button class="btn green" onclick="decide('${a.id}','approved')">✓ Approve</button><button class="btn red" onclick="decide('${a.id}','rejected')">Request changes</button></div>
   </div></div>
-  <div class="footer-note">This is the screen a customer lands on from the WhatsApp message — one tap, no app install, no password.</div>`;
+  <div class="footer-note">This is the screen a customer lands on from the WhatsApp message, after signing in.</div>`;
 }
 function decide(aid,status){
   const a=DB.approvals.find(x=>x.id===aid); if(!a||a.status!=='pending')return;
@@ -461,12 +529,107 @@ function viewAdmin(){
   }).join('')}</div>
   <div class="section-label">Pending approvals</div>
   <div class="feed">${pend.length?pend.map(a=>approvalCard(a,false)).join(''):'<div class="card empty">Nothing waiting on a customer.</div>'}</div>
+  ${billsHtml()}
+  <div class="card" style="padding:14px 16px;margin-top:14px;display:flex;align-items:center;gap:12px"><div style="flex:1"><b>WhatsApp notifications</b><div style="color:var(--muted);font-size:13px">Connect your business number and choose what gets sent.</div></div><button class="btn wa sm" onclick="go('#/admin/whatsapp')">Set up</button></div>
   <div class="section-label">Activity log</div>
   <div class="card"><div style="padding:12px 16px 4px"><select id="log-filter" onchange="viewAdmin()" style="border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff;font-size:13px">
     <option value="all">All projects</option>${projs.map(p=>`<option value="${p.id}" ${filter===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div>
   <div class="log">${rows||'<div class="empty">No activity yet.</div>'}</div></div>
   <div class="footer-note"><a href="javascript:resetDemo()">Reset demo data</a></div>`;
 }
+
+/* ---- Bills (PM adds, admin only views) ---- */
+let billFile=null;
+function viewBillForm(){
+  billFile=null;
+  const opts=Object.values(DB.projects).map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  app.innerHTML=`${topbar('Project Manager view')}
+  <div class="hero" style="padding:14px 0 4px"><h1 style="font-size:22px">Add bill / invoice <span class="admin-only">Admin only</span></h1><p>Visible only to the admin. Customers and other PMs cannot see it.</p></div>
+  <div class="card" style="padding:18px;margin-top:10px">
+    <div class="field"><label>Project</label><select id="b-proj">${opts}</select></div>
+    <div class="field"><label>Vendor / supplier</label><input type="text" id="b-vendor" placeholder="e.g. Sri Lakshmi Cement Traders"></div>
+    <div class="field"><label>Bill / invoice no.</label><input type="text" id="b-no" placeholder="e.g. INV-2041"></div>
+    <div class="field"><label>Amount (₹)</label><input type="number" id="b-amt" inputmode="decimal" min="0" placeholder="e.g. 48500"></div>
+    <div class="field"><label>Bill date</label><input type="date" id="b-date" value="${new Date().toISOString().slice(0,10)}"></div>
+    <div class="field"><label>Note (optional)</label><textarea id="b-note" style="min-height:64px" placeholder="What is this bill for?"></textarea></div>
+    <div class="field"><label>Upload bill (photo or PDF)</label><input type="file" accept="image/*,application/pdf" onchange="pickBill(this)"><div id="b-file" style="color:var(--muted);font-size:12px;margin-top:6px">No file chosen. Max 1.5 MB in this demo.</div></div>
+    <div style="display:flex;gap:10px"><button class="btn ghost" onclick="go('#/pm')">Cancel</button><button class="btn primary" style="flex:1" onclick="submitBill()">Submit to admin</button></div>
+  </div>`;
+}
+function pickBill(input){
+  const f=input.files[0];if(!f)return;
+  if(f.size>1.5*1024*1024){toast('File too large for the demo (max 1.5 MB)');input.value='';return}
+  const r=new FileReader();
+  r.onload=()=>{billFile={name:f.name,type:f.type,data:r.result};document.getElementById('b-file').textContent='Attached: '+f.name};
+  r.readAsDataURL(f);
+}
+function submitBill(){
+  const vendor=document.getElementById('b-vendor').value.trim();
+  const amt=parseFloat(document.getElementById('b-amt').value);
+  if(!vendor)return toast('Add the vendor name');
+  if(!(amt>0))return toast('Add the bill amount');
+  const pid=document.getElementById('b-proj').value;
+  const b={id:uid('b'),projectId:pid,vendor,no:document.getElementById('b-no').value.trim(),amount:amt,date:document.getElementById('b-date').value,note:document.getElementById('b-note').value.trim(),file:billFile,by:session().name,ts:Date.now()};
+  DB.bills.push(b);
+  logIt(b.by,pid,'added a bill',`${vendor} · ₹${amt.toLocaleString('en-IN')} (admin only)`);
+  try{save()}catch(e){b.file=null;DB.bills[DB.bills.length-1]=b;save();toast('File too big to store in the demo, saved without attachment')}
+  showWaMsg({title:'New bill uploaded',body:`🧾 <b>New bill added</b> — ${esc(DB.projects[pid].name)}\n\n${esc(b.by)} added a bill from <b>${esc(vendor)}</b> for <b>₹${amt.toLocaleString('en-IN')}</b>.\n\nTap to view in the admin panel:`,to:'Bala (Admin)',btn:'Open bills →',href:'#/admin',after:'#/pm'});
+}
+function viewBillFile(id){
+  const b=DB.bills.find(x=>x.id===id);if(!b||!b.file)return;
+  const w=window.open();if(w){w.document.write(`<title>${esc(b.file.name)}</title><body style="margin:0"><${b.file.type==='application/pdf'?'iframe':'img'} src="${b.file.data}" style="width:100%;${b.file.type==='application/pdf'?'height:100vh;border:0':''}">`)}
+}
+function billsHtml(){
+  const bills=[...DB.bills].sort((a,b)=>b.ts-a.ts);
+  const total=bills.reduce((s,b)=>s+b.amount,0);
+  return `<div class="section-label">Bills &amp; invoices <span class="admin-only">Admin only</span></div>
+  <div class="card"><div style="padding:12px 16px;font-size:13.5px;color:var(--muted)">${bills.length} bills · total <b style="color:var(--ink)">₹${total.toLocaleString('en-IN')}</b></div>
+  ${bills.map(b=>`<div class="bill-row"><div><b>${esc(b.vendor)}</b>${b.no?` · ${esc(b.no)}`:''}<br><span style="color:var(--muted);font-size:12.5px">${esc(projectName(b.projectId))} · added by ${esc(b.by)} · ${b.date?new Date(b.date).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):fullTime(b.ts)}${b.note?'<br>'+esc(b.note):''}</span></div>
+    <div class="amt">₹${b.amount.toLocaleString('en-IN')}${b.file?`<br><a href="javascript:viewBillFile('${b.id}')" style="font-size:12.5px;font-weight:600">View file</a>`:''}</div></div>`).join('')||'<div class="empty">No bills yet.</div>'}</div>`;
+}
+/* ---- WhatsApp: generic message + real click-to-send + setup ---- */
+function waNum(){return localStorage.getItem('bala.wa.number')||''}
+function showWaMsg(o){
+  const t=new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit',hour12:true});
+  const plain=o.body.replace(/<[^>]+>/g,'').replace(/&amp;/g,'&');
+  const real='https://wa.me/'+(waNum().replace(/\D/g,''))+'?text='+encodeURIComponent(plain);
+  overlayRoot.innerHTML=`<div class="wa-overlay" onclick="if(event.target===this)closeWa('${o.after}')">
+  <button class="wa-close" onclick="closeWa('${o.after}')">Close</button>
+  <div class="phone"><div class="scr">
+    <div class="wa-head"><div class="wa-av">B</div><div><div class="nm">Bala Updates</div><div class="st">To: ${esc(o.to)} · Business account</div></div></div>
+    <div class="wa-chat"><div class="wa-msg"><div class="biz">~ Bala Updates</div><p>${o.body}</p>
+      <a class="walink" href="${o.href}" onclick="closeWa('')">${o.btn}</a><div class="meta">${t} <b>✓✓</b></div></div></div>
+    <div class="wa-note">Simulated notification. <a href="${real}" target="_blank" rel="noopener" style="font-weight:700;color:#128c7e">Send this on WhatsApp for real →</a></div>
+  </div></div></div>`;
+}
+function closeWa(after){overlayRoot.innerHTML='';if(after)go(after)}
+function viewWaSetup(){
+  const k=['wa.ev.approval','wa.ev.update','wa.ev.bill'];
+  const on=x=>localStorage.getItem('bala.'+x)!=='0';
+  app.innerHTML=`${topbar('WhatsApp setup')}
+  <div class="hero" style="padding-top:10px"><h1>WhatsApp notifications</h1><p>How Bala sends WhatsApp messages from your own business number.</p></div>
+  <div class="card" style="padding:18px;margin-bottom:14px">
+    <div class="field"><label>Your WhatsApp Business number (with country code)</label><input type="tel" id="wa-num" placeholder="e.g. 91 98XXXXXXXX" value="${esc(waNum())}"></div>
+    <div class="section-label" style="margin:10px 0 4px">Send a WhatsApp when</div>
+    <label class="toggle-row"><input type="checkbox" ${on(k[0])?'checked':''} onchange="setEv('${k[0]}',this.checked)"> A PM requests a customer approval</label>
+    <label class="toggle-row"><input type="checkbox" ${on(k[1])?'checked':''} onchange="setEv('${k[1]}',this.checked)"> A PM posts a progress or material update</label>
+    <label class="toggle-row"><input type="checkbox" ${on(k[2])?'checked':''} onchange="setEv('${k[2]}',this.checked)"> A PM uploads a bill (to admin only)</label>
+    <div style="display:flex;gap:10px;margin-top:12px"><button class="btn primary" onclick="saveWa()">Save</button>
+    <button class="btn wa" onclick="testWa()">Send test message</button></div>
+    <div style="color:var(--muted);font-size:12px;margin-top:8px">Demo mode: the test opens WhatsApp with a ready message. Live, Bala sends automatically.</div>
+  </div>
+  <div class="card" style="padding:18px"><b>To go live, the business needs to provide</b>
+    <ol class="wa-steps"><li>A phone number for WhatsApp Business that is not already on the regular WhatsApp app (or is moved off it).</li>
+    <li>A Meta Business account (Facebook Business Manager) in the company name, with business verification.</li>
+    <li>Access to WhatsApp Business Platform (Cloud API), set up under that account with the number above.</li>
+    <li>Approval of the message templates (approval request, update, bill). Meta reviews these, usually within a day.</li>
+    <li>Customers' mobile numbers and their consent (opt-in) to receive messages.</li></ol>
+    <span style="color:var(--muted);font-size:12.5px">Messages are charged by Meta per conversation, billed to the business. Bala connects once these are in place.</span></div>
+  <div class="footer-note"><a href="javascript:go('#/admin')">Back to admin</a></div>`;
+}
+function setEv(k,v){localStorage.setItem('bala.'+k,v?'1':'0')}
+function saveWa(){localStorage.setItem('bala.wa.number',document.getElementById('wa-num').value.trim());toast('Saved')}
+function testWa(){saveWa();showWaMsg({title:'Test',body:'✅ <b>Test message</b> from Bala. WhatsApp notifications are set up.',to:'your number',btn:'Open Bala →',href:'#/admin/whatsapp',after:''})}
 /* ---- WhatsApp simulation ---- */
 function showWhatsApp(a){
   const p=DB.projects[a.projectId];
@@ -478,13 +641,13 @@ function showWhatsApp(a){
     <div class="wa-head"><div class="wa-av">B</div><div><div class="nm">Bala Updates</div><div class="st">Business account · online</div></div></div>
     <div class="wa-chat">
       <div class="wa-msg"><div class="biz">~ Bala Updates</div>
-        <p>🏗️ <b>Approval needed</b> — ${esc(p.name)}, ${esc(p.loc)}\n\n${esc(p.pm)} (Project Manager) has requested your decision:\n<b>${esc(a.title)}</b>\n\nNo app, no login — tap below to review photos and respond:</p>
+        <p>🏗️ <b>Approval needed</b> — ${esc(p.name)}, ${esc(p.loc)}\n\n${esc(p.pm)} (Project Manager) has requested your decision:\n<b>${esc(a.title)}</b>\n\nNo app to install — tap below, sign in and respond:</p>
         <a class="walink" href="#/approve/${a.id}" onclick="closeOverlay()">Review &amp; respond →</a>
         <div class="meta">${t} <b>✓✓</b></div>
       </div>
       <div class="wa-msg" style="align-self:flex-end;background:#d9fdd3"><p style="margin:0;color:#111b21">👍 Got it, checking now</p><div class="meta">${t} <b>✓✓</b></div></div>
     </div>
-    <div class="wa-note">This is what the customer receives on WhatsApp the moment you post.<br>One tap opens the approval screen — nothing to install, no password.</div>
+    <div class="wa-note">This is what the customer receives on WhatsApp the moment you post.<br>The link opens the approval screen after the customer signs in.<br><a href="https://wa.me/?text=${encodeURIComponent('Approval needed: '+a.title+' - '+p.name+'. Review and respond: '+link)}" target="_blank" rel="noopener" style="font-weight:700;color:#128c7e">Send this on WhatsApp for real →</a></div>
   </div></div></div>`;
 }
 function closeOverlay(){overlayRoot.innerHTML='';if(location.hash.startsWith('#/approve'))render();else go('#/project/'+lastWaProject())}
@@ -500,12 +663,22 @@ function render(){
   const h=location.hash||'#/';
   overlayRoot.innerHTML='';
   window.scrollTo(0,0);
+  const ses=session();
+  if(!ses){
+    if(h!=='#/login'&&h!=='#/'&&h!=='')sessionStorage.setItem('bala.next',h);
+    if(h!=='#/login'){location.hash='#/login';return}
+    return viewLogin();
+  }
+  if(h==='#/login')return go(USERS[ses.id].home);
+  if(!canView(ses.role,h)){toast('That page is not available for your login');return go(USERS[ses.id].home)}
   if(h.startsWith('#/pm/post/'))return viewPMPost(h.split('/')[3]);
   if(h==='#/pm')return viewPM();
   if(h==='#/customer')return viewCustomerPick();
   if(h.startsWith('#/project/'))return viewProject(h.split('/')[2]);
   if(h.startsWith('#/approve/'))return viewApprove(h.split('/')[2]);
+  if(h==='#/pm/bill')return viewBillForm();
   if(h==='#/admin')return viewAdmin();
+  if(h==='#/admin/whatsapp')return viewWaSetup();
   return viewHome();
 }
 window.addEventListener('hashchange',render);
@@ -513,3 +686,4 @@ render();
 </script>
 </body>
 </html>
+
